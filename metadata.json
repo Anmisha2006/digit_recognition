@@ -1,0 +1,5 @@
+{
+  "name": "Digit Recognizer",
+  "description": "A handwritten digit recognition tool powered by Gemini 2.5 Flash. Draw a number on the canvas and let the AI identify it.",
+  "requestFramePermissions": []
+}
