@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
 import DrawingCanvas from './components/DrawingCanvas';
+import CircularProgress from './components/CircularProgress';
+import ProbabilityChart from './components/ProbabilityChart';
 import { recognizeDigit } from './services/geminiService';
 import { DrawingCanvasRef, RecognitionResult } from './types';
 import { BrainIcon, EraserIcon, LoaderIcon } from './components/Icons';
@@ -138,29 +140,49 @@ const App: React.FC = () => {
           {result && (
             <div className="w-full bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden animate-fade-in-up">
                <div className="bg-indigo-50/50 p-4 border-b border-slate-100 flex items-center justify-between">
-                 <span className="text-xs font-semibold text-indigo-600 tracking-wider uppercase">Result</span>
+                 <span className="text-xs font-semibold text-indigo-600 tracking-wider uppercase">Analysis Result</span>
                  <span className="text-xs text-slate-400">Gemini 2.5 Flash</span>
                </div>
-               <div className="p-8 flex flex-col items-center">
-                  <div className="relative mb-6">
-                    <div className="absolute -inset-4 bg-indigo-100 rounded-full blur-xl opacity-50"></div>
-                    <span className="relative text-8xl font-black text-slate-800 leading-none">
-                      {result.digit}
-                    </span>
-                  </div>
+               <div className="p-6 flex flex-col gap-6">
                   
-                  <div className="w-full space-y-4">
-                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <p className="text-sm font-semibold text-slate-500 mb-1">AI Analysis</p>
-                        <p className="text-slate-800 italic">"{result.rawText}"</p>
+                  {/* Top Row: Big Digit and Quick Stats */}
+                  <div className="flex items-center justify-between gap-6">
+                    <div className="relative flex-shrink-0">
+                        <div className="absolute -inset-4 bg-indigo-100 rounded-full blur-xl opacity-50"></div>
+                        <span className="relative text-7xl font-black text-slate-800 leading-none">
+                        {result.digit}
+                        </span>
+                    </div>
+                    
+                    {/* Small Quality/Precision Stat */}
+                    <div className="flex flex-col items-end justify-center">
+                        <span className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Handwriting Quality</span>
+                        <div className="flex items-baseline gap-1">
+                            <span className={`text-2xl font-bold ${result.precision > 80 ? 'text-green-600' : 'text-amber-600'}`}>
+                                {result.precision}%
+                            </span>
+                        </div>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px w-full bg-slate-100"></div>
+                  
+                  {/* Middle: Probability Bar Graph */}
+                  <div className="w-full">
+                     <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Model Confidence (0-9)</span>
+                        <span className="text-xs text-slate-400">{result.accuracy}% Match</span>
                      </div>
-                     
-                     {lastDrawnImage && (
-                       <div className="flex items-center justify-center space-x-3 mt-4 pt-4 border-t border-slate-50">
-                         <span className="text-xs text-slate-400">Input Image:</span>
-                         <img src={lastDrawnImage} alt="Drawn Digit" className="h-12 w-12 border border-slate-200 rounded bg-white object-contain" />
-                       </div>
-                     )}
+                     <ProbabilityChart 
+                        data={result.distribution} 
+                        highlightIndex={parseInt(result.digit) || null} 
+                     />
+                  </div>
+
+                  {/* Bottom: AI Text */}
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p className="text-sm text-slate-600 italic">"{result.rawText}"</p>
                   </div>
                </div>
             </div>
@@ -168,10 +190,6 @@ const App: React.FC = () => {
         </div>
 
       </main>
-      
-      <footer className="mt-12 text-slate-400 text-sm">
-        Powered by <a href="https://ai.google.dev/" className="text-indigo-500 hover:underline">Google Gemini API</a>
-      </footer>
     </div>
   );
 };

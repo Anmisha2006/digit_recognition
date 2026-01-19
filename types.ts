@@ -4,6 +4,9 @@ export interface RecognitionResult {
   digit: string;
   confidence?: string;
   rawText: string;
+  accuracy: number;
+  precision: number;
+  distribution: number[];
 }
 
 export interface DrawingCanvasProps {

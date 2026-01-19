@@ -28,7 +28,7 @@ export const recognizeDigit = async (imageDataUrl: string): Promise<RecognitionR
             },
           },
           {
-            text: "Analyze this image. It contains a single handwritten digit (0-9). Identify the digit. Return a JSON object with the key 'digit' (string) and 'explanation' (short string). Example: {\"digit\": \"5\", \"explanation\": \"Clear structure of a 5\"}. If it is not a digit, return {\"digit\": \"?\", \"explanation\": \"Not recognized as a number\"}.",
+            text: "Analyze this image. It contains a single handwritten digit (0-9). Identify the digit. Return a JSON object with the following keys: 'digit' (string), 'explanation' (short string), 'accuracy' (number 0-100 representing your confidence in the identification), 'precision' (number 0-100 representing the clarity/quality of the handwriting), and 'distribution' (array of 10 numbers summing to approx 100, representing the probability percentage for each digit 0-9). Example: {\"digit\": \"5\", \"explanation\": \"Clear structure of a 5\", \"accuracy\": 98, \"precision\": 92, \"distribution\": [0, 0, 1, 0, 0, 98, 1, 0, 0, 0]}. If it is not a digit, return {\"digit\": \"?\", \"explanation\": \"Not recognized as a number\", \"accuracy\": 0, \"precision\": 0, \"distribution\": [0,0,0,0,0,0,0,0,0,0]}.",
           },
         ],
       },
@@ -46,9 +46,23 @@ export const recognizeDigit = async (imageDataUrl: string): Promise<RecognitionR
 
     try {
       const jsonResponse = JSON.parse(text);
+      // Ensure distribution is an array of 10 numbers
+      let distribution = jsonResponse.distribution;
+      if (!Array.isArray(distribution) || distribution.length !== 10) {
+          // Fallback: create a distribution based on the result
+          const recognizedDigit = parseInt(jsonResponse.digit);
+          distribution = Array(10).fill(0);
+          if (!isNaN(recognizedDigit)) {
+              distribution[recognizedDigit] = jsonResponse.accuracy || 90;
+          }
+      }
+
       return {
         digit: jsonResponse.digit,
         rawText: jsonResponse.explanation,
+        accuracy: typeof jsonResponse.accuracy === 'number' ? jsonResponse.accuracy : 0,
+        precision: typeof jsonResponse.precision === 'number' ? jsonResponse.precision : 0,
+        distribution: distribution,
       };
     } catch (e) {
       // Fallback if JSON parsing fails (though responseMimeType should prevent this)
@@ -56,6 +70,9 @@ export const recognizeDigit = async (imageDataUrl: string): Promise<RecognitionR
       return {
         digit: text.replace(/\D/g, '').charAt(0) || "?",
         rawText: text,
+        accuracy: 0,
+        precision: 0,
+        distribution: Array(10).fill(0),
       };
     }
 
